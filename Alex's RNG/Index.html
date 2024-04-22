@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nothing's RNG</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        max-width: 600px;
+        margin: 100px auto;
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+        font-size: 32px;
+        margin-bottom: 20px;
+        color: #333;
+    }
+    #word {
+        font-size: 24px;
+        margin-top: 50px;
+        color: #007bff;
+        animation: none; /* No animation initially */
+    }
+    #spinButton, #viewCollection, #backButton {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+    #spinButton:hover, #viewCollection:hover, #backButton:hover {
+        background-color: #0056b3;
+    }
+    #collection {
+        display: none;
+        margin-top: 30px;
+        text-align: left;
+    }
+</style>
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <h1>Nothing's RNG</h1>
+        <div id="word">Click "Spin" to get a random word!</div>
+        <button id="spinButton">Spin</button>
+        <button id="viewCollection">View Collection</button>
+    </div>
+
+    <div class="container" id="collectionContainer">
+        <h1>Collection</h1>
+        <button id="backButton">Back</button>
+        <div id="collection">
+            <ul id="wordList"></ul>
+        </div>
+    </div>
+
+    <script>
+        // Array of phrases with corresponding probabilities
+        var phraseProbabilities = [
+            { phrase: "Common [1/2]", chance: 0.5 },
+            { phrase: "Uncommon [1/4]", chance: 0.25 },
+            { phrase: "Good [1/5]", chance: 0.2 },
+            { phrase: "Natural [1/8]", chance: 0.025 },
+            { phrase: "Rare [1/16]", chance: 0.0125 },
+            { phrase: "Divinus [1/32]", chance: 0.00625 },
+            { phrase: "Crystallized [1/64]", chance: 0.003125 },
+            { phrase: "Rage [1/128]", chance: 0.0015625 },
+            { phrase: "Topaz [1/150]", chance: 0.0013333 },
+            { phrase: "Glacier [1/256]", chance: 0.0019531 },
+            { phrase: "Wind [1/300]", chance: 0.0013333 },
+            { phrase: "Ruby [1/350]", chance: 0.0014286 },
+            { phrase: "Emerald [1/500]", chance: 0.002 },
+            { phrase: "Glided [1/512]", chance: 0.0019531 },
+            { phrase: "Jackpot [1/777]", chance: 0.0012864 },
+            { phrase: "Sapphire [1/800]", chance: 0.00125 },
+            { phrase: "Aquamarine [1/900]", chance: 0.0011111 },
+            { phrase: "Diaboli [1/1,004]", chance: 0.000995 },
+            { phrase: "Precious [1/1,024]", chance: 0.0009766 },
+            { phrase: "Undefined [1/1,111]", chance: 0.0009001 },
+            { phrase: "Magnetic [1/2,048]", chance: 0.0004883 },
+            { phrase: "Sidereum [1/4,096]", chance: 0.0002441 },
+            { phrase: "Bleeding Bleeding [1/4,444]", chance: 0.000225 },
+            { phrase: "Solar [1/5,000]", chance: 0.0002 },
+            { phrase: "Lunar [1/5,000]", chance: 0.0002 },
+            { phrase: "Starlight [1/5,000]", chance: 0.0002 },
+            { phrase: ":Flushed: [1/6,900]", chance: 0.0001449 },
+            { phrase: "Undead [1/10,000]", chance: 0.0001 },
+            { phrase: "Comet [1/12,000]", chance: 0.0000833 },
+            { phrase: "Rage: Heated [1/12,800]", chance: 0.0000781 },
+            { phrase: "Permafrost [1/24,500]", chance: 0.0000408 },
+            { phrase: "Stormal [1/30,000]", chance: 0.0000333 },
+            { phrase: "Aquatic [1/40,000]", chance: 0.000025 },
+            { phrase: "Lightning [1/40,000]", chance: 0.000025 },
+            { phrase: ":Flushed: Lobotomy [1/69,000]", chance: 0.0000145 },
+            { phrase: "Nautilus [1/70,000]", chance: 0.0000143 },
+            { phrase: "Exotic [1/99,999]", chance: 0.00001 },
+            { phrase: "Undead: Devil [1/100,000]", chance: 0.00001 },
+            { phrase: "Diaboli: Void [1/100,400]", chance: 0.0000099586 },
+            { phrase: "Jaid [1/125,000]", chance: 0.000008 },
+            { phrase: "Bounded [1/200,000]", chance: 0.000005 },
+            { phrase: "Celestial [1/350,000]", chance: 0.0000028571 },
+            { phrase: "Galaxy [1/500,000]", chance: 0.000002 },
+            { phrase: "Lunar: Full Moon [1/500,000]", chance: 0.000002 },
+            { phrase: "Twilight [1/600,000]", chance: 0.0000016667 },
+            { phrase: "Kyawthuite [1/850,000]", chance: 0.0000011765 },
+            { phrase: "A R C A N E [1/1,000,000]", chance: 0.000001 },
+            { phrase: "STARSCOURGE [1/1,000,000]", chance: 0.000001 },
+            { phrase: "Magnetic: Reverse Polarity [1/1,024,000]", chance: 9.7656e-7 },
+            { phrase: "GRAVITATIONAL [1/2,000,000]", chance: 5e-7 },
+            { phrase: "BOUNDED: UNBOUNDED [1/2,000,000]", chance: 5e-7 },
+            { phrase: "Virtual [1/2,500,000]", chance: 4e-7 },
+            { phrase: "Sailor [1/3,000,000]", chance: 3.3333e-7 },
+            { phrase: "Poseidon [1/3,800,000]", chance: 2.6316e-7 },
+            { phrase: "Aquatic: Flame [1/4,000,000]", chance: 2.5e-7 },
+            { phrase: "Hades [1/6,666,666]", chance: 1.5e-7 },
+            { phrase: "Hyper-Volt [1/7,500,000]", chance: 1.3333e-7 },
+            { phrase: "Glitch [1/12,210,110]", chance: 8.2016e-8 },
+            { phrase: "Arcane: Legacy [1/15,000,000]", chance: 6.6667e-8 },
+            { phrase: "CHROMATIC [1/20,000,000]", chance: 5e-8 },
+            { phrase: "Arcane: Dark [1/30,000,000]", chance: 3.3333e-8 },
+            { phrase: "Ethereal [1/35,000,000]", chance: 2.8571e-8 },
+            { phrase: "KROMAT1K [1/40,000,000]", chance: 2.5e-8 },
+            { phrase: "Exotic·APEX [1/49,999,500]", chance: 2e-8 },
+            { phrase: "Matrix [1/50,000,000]", chance: 2e-8 },
+            { phrase: "CHROMATIC: GENESIS [1/99,999,999]", chance: 1e-8 },
+            { phrase: "CHROMATIC: EXOTIC [1/99,999,999]", chance: 1e-8 },
+            { phrase: "ABYSSAL HUNTER [1/100,000,000]", chance: 1e-8 },
+            { phrase: "Impeached [1/200,000,000]", chance: 5e-9 },
+            { phrase: "A R C H A N G E L [1/250,000,000]", chance: 4e-9 },
+            { phrase: "Impeached: i'm peach [1/400,000,000]", chance: 2.5e-9 }
+        ];
+
+        var collectedPhrases = [];
+
+        // Function to get a random phrase based on probabilities
+        function getRandomPhrase() {
+            var randomNumber = Math.random();
+            var cumulativeProbability = 0;
+            for (var i = 0; i < phraseProbabilities.length; i++) {
+                cumulativeProbability += phraseProbabilities[i].chance;
+                if (randomNumber <= cumulativeProbability) {
+                    return phraseProbabilities[i].phrase;
+                }
+            }
+            // If no phrase is returned before loop ends, return the last phrase
+            return phraseProbabilities[phraseProbabilities.length - 1].phrase;
+        }
+
+        // Function to display the random phrase
+        function displayRandomPhrase() {
+            var phraseDisplay = document.getElementById("word");
+            var newPhrase = getRandomPhrase();
+            // Check if the phrase is not already in the collection
+            if (!collectedPhrases.includes(newPhrase)) {
+                collectedPhrases.push(newPhrase); // Add phrase to collection
+            }
+            phraseDisplay.textContent = newPhrase; // Display final phrase
+        }
+
+        // Function to update the collection display
+        function updateCollection() {
+            var wordList = document.getElementById("wordList");
+            wordList.innerHTML = ""; // Clear previous content
+            collectedPhrases.forEach(function(phrase) {
+                var listItem = document.createElement("li");
+                listItem.textContent = phrase;
+                wordList.appendChild(listItem);
+            });
+        }
+
+        // Event listener for the spin button
+        document.getElementById("spinButton").addEventListener("click", function() {
+            document.getElementById("collectionContainer").style.display = "none";
+            document.getElementById("mainContainer").style.display = "block";
+            displayRandomPhrase();
+        });
+
+        // Event listener for the view collection button
+        document.getElementById("viewCollection").addEventListener("click", function() {
+            updateCollection();
+            document.getElementById("mainContainer").style.display = "none";
+            document.getElementById("collectionContainer").style.display = "block";
+        });
+
+        // Event listener for the back button
+        document.getElementById("backButton").addEventListener("click", function() {
+            document.getElementById("collectionContainer").style.display = "none";
+            document.getElementById("mainContainer").style.display = "block";
+        });
+    </script>
+</body>
+</html>
